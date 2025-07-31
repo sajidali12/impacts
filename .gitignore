@@ -1,0 +1,41 @@
+# Laravel specific
+/node_modules
+/public/hot
+/public/storage
+/storage/*.key
+/vendor
+.env
+.env.backup
+.env.production
+.phpunit.result.cache
+bootstrap/cache/*.php
+.DS_Store
+Thumbs.db
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Logs
+/storage/logs/*.log
+
+# Compiled views
+/storage/framework/views/*.php
+
+# Cache
+/bootstrap/cache/config.php
+/bootstrap/cache/packages.php
+/bootstrap/cache/services.php
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+
+# Testing
+/coverage
+/.phpunit.cache
