@@ -1,7 +1,6 @@
 # Laravel specific
 /node_modules
-/public/hot
-/public/storage
+/public
 /storage/*.key
 /vendor
 .env
