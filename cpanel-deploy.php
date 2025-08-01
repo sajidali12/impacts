@@ -7,12 +7,27 @@
  */
 
 // Define paths based on your cPanel structure
-$publicPath = __DIR__ . '/public_html/app';  // Your Laravel public files location
-$storagePath = __DIR__ . '/laravel/storage/app/public';  // Your Laravel storage location
+// Detect if we're in the root directory or public_html
+$currentDir = __DIR__;
+if (basename($currentDir) === 'app') {
+    // We're inside the app directory
+    $publicPath = $currentDir;  // Current directory is the public path
+    $storagePath = dirname($currentDir) . '/laravel/storage/app/public';  // Go up one level to find laravel
+} else {
+    // We're in the root directory
+    $publicPath = $currentDir . '/public_html/app';  // Your Laravel public files location
+    $storagePath = $currentDir . '/laravel/storage/app/public';  // Your Laravel storage location
+}
 $symlinkPath = $publicPath . '/storage';
 
 echo "Laravel cPanel Storage Link Setup\n";
 echo "==================================\n\n";
+
+echo "Debug Information:\n";
+echo "Current directory: $currentDir\n";
+echo "Public path: $publicPath\n";
+echo "Storage path: $storagePath\n";
+echo "Symlink path: $symlinkPath\n\n";
 
 // Check if public directory exists
 if (!is_dir($publicPath)) {

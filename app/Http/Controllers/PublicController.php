@@ -41,6 +41,8 @@ class PublicController extends Controller
 
     public function properties(Request $request): View
     {
+        $siteSettings = HomepageBanner::getActive();
+        
         $query = Property::active()->with('user');
 
         if ($request->filled('search')) {
@@ -105,11 +107,13 @@ class PublicController extends Controller
             ->sort()
             ->values();
 
-        return view('public.properties', compact('properties', 'propertyTypes', 'locations'));
+        return view('public.properties', compact('siteSettings', 'properties', 'propertyTypes', 'locations'));
     }
 
     public function services(Request $request): View
     {
+        $siteSettings = HomepageBanner::getActive();
+        
         $query = Service::active()->with('user');
 
         if ($request->filled('search')) {
@@ -164,7 +168,7 @@ class PublicController extends Controller
             ->sort()
             ->values();
 
-        return view('public.services', compact('services', 'serviceTypes', 'serviceAreas'));
+        return view('public.services', compact('siteSettings', 'services', 'serviceTypes', 'serviceAreas'));
     }
 
     public function showProperty(Property $property): View

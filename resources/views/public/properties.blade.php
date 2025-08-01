@@ -22,20 +22,42 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
                     <div class="flex">
+                        <!-- Logo -->
                         <div class="shrink-0 flex items-center">
-                            <a href="{{ route('home') }}" class="text-xl font-bold text-gray-800">
-                                {{ config('app.name', 'IMPACTS Referral') }}
+                            <a href="{{ route('home') }}" class="flex items-center">
+                                @if($siteSettings && $siteSettings->site_logo)
+                                    <img src="{{ asset('storage/' . $siteSettings->site_logo) }}" alt="{{ config('app.name') }}" class="h-12 w-auto">
+                                @else
+                                    <span class="text-xl font-bold text-gray-800">{{ config('app.name', 'IMPACTS Referral') }}</span>
+                                @endif
                             </a>
                         </div>
+                        <!-- Navigation Links -->
                         <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                            <a href="{{ route('home') }}" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Home</a>
-                            <a href="{{ route('properties') }}" class="border-indigo-400 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Properties</a>
-                            <a href="{{ route('services') }}" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Services</a>
+                            <a href="{{ route('home') }}" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                Home
+                            </a>
+                            <a href="{{ route('properties') }}" class="border-indigo-400 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                Properties
+                            </a>
+                            <a href="{{ route('services') }}" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                Services
+                            </a>
                         </div>
                     </div>
+                    <!-- Auth Links -->
                     <div class="hidden sm:flex sm:items-center sm:ml-6">
                         @auth
-                            <span class="text-gray-700">Welcome, {{ Auth::user()->name }}</span>
+                            <div class="ml-3 relative">
+                                <span class="text-gray-700">Welcome, {{ Auth::user()->name }}</span>
+                                <a href="{{ route('logout') }}" class="ml-4 text-red-600 hover:text-red-800"
+                                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                    Logout
+                                </a>
+                                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">
+                                    @csrf
+                                </form>
+                            </div>
                         @else
                             <div class="space-x-4">
                                 <a href="{{ route('login') }}" class="text-gray-500 hover:text-gray-700">Login</a>
