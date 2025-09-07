@@ -50,25 +50,48 @@ class StripeService
     {
         try {
             $paymentIntent = PaymentIntent::retrieve($paymentIntentId);
+            \Log::info('Payment Intent Retrieved', [
+                'id' => $paymentIntentId,
+                'status' => $paymentIntent->status,
+                'amount' => $paymentIntent->amount,
+            ]);
             
             if ($paymentIntent->status === 'succeeded') {
                 $invoice = Invoice::where('stripe_payment_intent_id', $paymentIntentId)->first();
                 
                 if ($invoice) {
-                    $invoice->markAsPaid([
+                    $paymentData = [
                         'stripe_payment_intent_id' => $paymentIntentId,
                         'payment_method' => $paymentIntent->payment_method,
                         'amount_received' => $paymentIntent->amount_received / 100,
                         'currency' => $paymentIntent->currency,
                         'paid_at' => now(),
+                    ];
+                    
+                    \Log::info('Marking Invoice as Paid', [
+                        'invoice_id' => $invoice->id,
+                        'payment_data' => $paymentData,
                     ]);
                     
+                    $invoice->markAsPaid($paymentData);
+                    
                     return true;
+                } else {
+                    \Log::warning('No invoice found for payment intent', ['payment_intent_id' => $paymentIntentId]);
                 }
+            } else {
+                \Log::warning('Payment intent not succeeded', [
+                    'payment_intent_id' => $paymentIntentId,
+                    'status' => $paymentIntent->status,
+                ]);
             }
             
             return false;
         } catch (ApiErrorException $e) {
+            \Log::error('Stripe API error in confirmPayment', [
+                'payment_intent_id' => $paymentIntentId,
+                'error' => $e->getMessage(),
+            ]);
             throw new \Exception('Failed to confirm payment: ' . $e->getMessage());
         }
     }

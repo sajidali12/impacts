@@ -217,6 +217,28 @@ class DeveloperController extends Controller
         return view('developer.invoices', compact('invoices'));
     }
 
+    public function viewInvoice(Invoice $invoice): View
+    {
+        $this->authorize('view', $invoice);
+
+        return view('developer.invoice-view', compact('invoice'));
+    }
+
+    public function downloadInvoice(Invoice $invoice)
+    {
+        $this->authorize('view', $invoice);
+
+        try {
+            $pdf = app('dompdf.wrapper');
+            $pdf->loadView('invoices.pdf', compact('invoice'));
+            return $pdf->download('invoice-' . $invoice->invoice_number . '.pdf');
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('developer.invoices')
+                ->with('error', 'Unable to generate PDF. Please try again later.');
+        }
+    }
+
     public function payInvoice(Invoice $invoice): RedirectResponse
     {
         $this->authorize('view', $invoice);
@@ -239,6 +261,42 @@ class DeveloperController extends Controller
             return redirect()
                 ->route('developer.invoices')
                 ->with('error', 'Failed to initialize payment: ' . $e->getMessage());
+        }
+    }
+
+    public function paymentReturn(Request $request): RedirectResponse
+    {
+        $paymentIntentId = $request->query('payment_intent_id') ?: $request->query('payment_intent');
+        $paymentIntentClientSecret = $request->query('payment_intent_client_secret');
+        
+        \Log::info('Payment return parameters', [
+            'all_params' => $request->all(),
+            'payment_intent_id' => $paymentIntentId,
+        ]);
+        
+        if (!$paymentIntentId) {
+            return redirect()
+                ->route('developer.invoices')
+                ->with('error', 'Invalid payment return - missing payment intent ID.');
+        }
+
+        try {
+            $stripeService = app(\App\Services\StripeService::class);
+            $success = $stripeService->confirmPayment($paymentIntentId);
+            
+            if ($success) {
+                return redirect()
+                    ->route('developer.invoices')
+                    ->with('success', 'Payment completed successfully! Your invoice has been updated.');
+            } else {
+                return redirect()
+                    ->route('developer.invoices')
+                    ->with('error', 'Payment could not be confirmed. Please contact support if your card was charged.');
+            }
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('developer.invoices')
+                ->with('error', 'Payment verification failed: ' . $e->getMessage());
         }
     }
 

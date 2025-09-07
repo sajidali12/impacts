@@ -21,20 +21,41 @@
                 <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                     @auth
                         @if(auth()->user()->isAdmin())
-                            <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.*')">
+                            <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
                                 Admin Dashboard
+                            </x-nav-link>
+                            <x-nav-link :href="route('admin.payments')" :active="request()->routeIs('admin.payments')">
+                                Payments
                             </x-nav-link>
                         @endif
                         
                         @if(auth()->user()->isDeveloper())
-                            <x-nav-link :href="route('developer.dashboard')" :active="request()->routeIs('developer.*')">
-                                Developer Dashboard
+                            <x-nav-link :href="route('developer.dashboard')" :active="request()->routeIs('developer.dashboard')">
+                                Dashboard
+                            </x-nav-link>
+                            <x-nav-link :href="route('developer.properties.index')" :active="request()->routeIs('developer.properties.*')">
+                                Properties
+                            </x-nav-link>
+                            <x-nav-link :href="route('developer.analytics')" :active="request()->routeIs('developer.analytics')">
+                                Analytics
+                            </x-nav-link>
+                            <x-nav-link :href="route('developer.invoices')" :active="request()->routeIs('developer.invoices*')">
+                                Invoices
                             </x-nav-link>
                         @endif
                         
                         @if(auth()->user()->isServiceProvider())
-                            <x-nav-link :href="route('service-provider.dashboard')" :active="request()->routeIs('service-provider.*')">
-                                Service Provider Dashboard
+                            <x-nav-link :href="route('service-provider.dashboard')" :active="request()->routeIs('service-provider.dashboard')">
+                                Dashboard
+                            </x-nav-link>
+                            <x-nav-link :href="route('service-provider.services.index')" :active="request()->routeIs('service-provider.services.*')">
+                                Services
+                            </x-nav-link>
+                            <x-nav-link :href="route('service-provider.analytics')" :active="request()->routeIs('service-provider.analytics')">
+                                Analytics
+                            </x-nav-link>
+                            <x-nav-link :href="route('service-provider.invoices')" :active="request()->routeIs('service-provider.invoices*')">
+                                Invoices
                             </x-nav-link>
                         @endif
                     @else
@@ -109,20 +130,41 @@
         <div class="pt-2 pb-3 space-y-1">
             @auth
                 @if(auth()->user()->isAdmin())
-                    <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.*')">
+                    <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
                         Admin Dashboard
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('admin.payments')" :active="request()->routeIs('admin.payments')">
+                        Payments
                     </x-responsive-nav-link>
                 @endif
                 
                 @if(auth()->user()->isDeveloper())
-                    <x-responsive-nav-link :href="route('developer.dashboard')" :active="request()->routeIs('developer.*')">
-                        Developer Dashboard
+                    <x-responsive-nav-link :href="route('developer.dashboard')" :active="request()->routeIs('developer.dashboard')">
+                        Dashboard
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('developer.properties.index')" :active="request()->routeIs('developer.properties.*')">
+                        Properties
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('developer.analytics')" :active="request()->routeIs('developer.analytics')">
+                        Analytics
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('developer.invoices')" :active="request()->routeIs('developer.invoices*')">
+                        Invoices
                     </x-responsive-nav-link>
                 @endif
                 
                 @if(auth()->user()->isServiceProvider())
-                    <x-responsive-nav-link :href="route('service-provider.dashboard')" :active="request()->routeIs('service-provider.*')">
-                        Service Provider Dashboard
+                    <x-responsive-nav-link :href="route('service-provider.dashboard')" :active="request()->routeIs('service-provider.dashboard')">
+                        Dashboard
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('service-provider.services.index')" :active="request()->routeIs('service-provider.services.*')">
+                        Services
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('service-provider.analytics')" :active="request()->routeIs('service-provider.analytics')">
+                        Analytics
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('service-provider.invoices')" :active="request()->routeIs('service-provider.invoices*')">
+                        Invoices
                     </x-responsive-nav-link>
                 @endif
             @else

@@ -28,6 +28,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/leads', [AdminController::class, 'leads'])->name('leads');
     Route::get('/invoices', [AdminController::class, 'invoices'])->name('invoices');
     Route::post('/invoices/generate', [AdminController::class, 'generateInvoices'])->name('invoices.generate');
+    Route::get('/payments', [AdminController::class, 'payments'])->name('payments');
     Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
     Route::post('/settings', [AdminController::class, 'updateSettings'])->name('settings.update');
     Route::post('/users/{user}/toggle-status', [AdminController::class, 'toggleUserStatus'])->name('users.toggle-status');
@@ -40,7 +41,10 @@ Route::middleware(['auth', 'role:developer'])->prefix('developer')->name('develo
     Route::resource('properties', DeveloperController::class);
     Route::get('/analytics', [DeveloperController::class, 'analytics'])->name('analytics');
     Route::get('/invoices', [DeveloperController::class, 'invoices'])->name('invoices');
+    Route::get('/invoices/{invoice}/view', [DeveloperController::class, 'viewInvoice'])->name('invoices.view');
+    Route::get('/invoices/{invoice}/download', [DeveloperController::class, 'downloadInvoice'])->name('invoices.download');
     Route::post('/invoices/{invoice}/pay', [DeveloperController::class, 'payInvoice'])->name('invoices.pay');
+    Route::get('/payment/return', [DeveloperController::class, 'paymentReturn'])->name('payment.return');
 });
 
 Route::middleware(['auth', 'role:service_provider'])->prefix('service-provider')->name('service-provider.')->group(function () {
@@ -48,7 +52,10 @@ Route::middleware(['auth', 'role:service_provider'])->prefix('service-provider')
     Route::resource('services', ServiceProviderController::class);
     Route::get('/analytics', [ServiceProviderController::class, 'analytics'])->name('analytics');
     Route::get('/invoices', [ServiceProviderController::class, 'invoices'])->name('invoices');
+    Route::get('/invoices/{invoice}/view', [ServiceProviderController::class, 'viewInvoice'])->name('invoices.view');
+    Route::get('/invoices/{invoice}/download', [ServiceProviderController::class, 'downloadInvoice'])->name('invoices.download');
     Route::post('/invoices/{invoice}/pay', [ServiceProviderController::class, 'payInvoice'])->name('invoices.pay');
+    Route::get('/payment/return', [ServiceProviderController::class, 'paymentReturn'])->name('payment.return');
 });
 
 require __DIR__.'/auth.php';

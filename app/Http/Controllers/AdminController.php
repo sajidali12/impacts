@@ -233,6 +233,93 @@ class AdminController extends Controller
             ->with('success', 'Invoice generation job has been queued. Invoices will be generated shortly.');
     }
 
+    public function payments(): View
+    {
+        // Get payment statistics
+        $stats = [
+            'total_payments_today' => Invoice::whereDate('paid_at', today())->paid()->sum('total_amount'),
+            'total_payments_this_month' => Invoice::thisMonth()->paid()->sum('total_amount'),
+            'pending_amount' => Invoice::pending()->sum('total_amount'),
+            'overdue_amount' => Invoice::overdue()->sum('total_amount'),
+            'total_invoices_paid' => Invoice::paid()->count(),
+            'total_invoices_pending' => Invoice::pending()->count(),
+            'total_invoices_overdue' => Invoice::overdue()->count(),
+            'average_payment_time' => $this->getAveragePaymentTime(),
+        ];
+
+        // Recent payments (last 20 paid invoices)
+        $recentPayments = Invoice::with('user')
+            ->paid()
+            ->latest('paid_at')
+            ->limit(20)
+            ->get();
+
+        // Payment trends - last 7 days
+        $paymentTrends = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i);
+            $paymentTrends[] = [
+                'date' => $date->format('Y-m-d'),
+                'day' => $date->format('M j'),
+                'amount' => Invoice::whereDate('paid_at', $date)->paid()->sum('total_amount'),
+                'count' => Invoice::whereDate('paid_at', $date)->paid()->count(),
+            ];
+        }
+
+        // Top payers this month
+        $topPayers = User::whereHas('invoices', function ($query) {
+                $query->thisMonth()->paid();
+            })
+            ->withSum(['invoices' => function ($query) {
+                $query->thisMonth()->paid();
+            }], 'total_amount')
+            ->orderBy('invoices_sum_total_amount', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Pending and overdue invoices
+        $pendingInvoices = Invoice::with('user')
+            ->pending()
+            ->orderBy('due_date')
+            ->get();
+
+        $overdueInvoices = Invoice::with('user')
+            ->overdue()
+            ->orderBy('due_date')
+            ->get();
+
+        return view('admin.payments', compact(
+            'stats', 
+            'recentPayments', 
+            'paymentTrends', 
+            'topPayers', 
+            'pendingInvoices', 
+            'overdueInvoices'
+        ));
+    }
+
+    private function getAveragePaymentTime(): float
+    {
+        $paidInvoices = Invoice::paid()
+            ->whereNotNull('paid_at')
+            ->get();
+
+        if ($paidInvoices->isEmpty()) {
+            return 0;
+        }
+
+        $totalDays = 0;
+        $count = 0;
+
+        foreach ($paidInvoices as $invoice) {
+            $daysToPay = $invoice->invoice_date->diffInDays($invoice->paid_at);
+            $totalDays += $daysToPay;
+            $count++;
+        }
+
+        return $count > 0 ? round($totalDays / $count, 1) : 0;
+    }
+
     public function settings(): View
     {
         $settings = Setting::all()->keyBy('key');

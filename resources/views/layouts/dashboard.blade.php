@@ -12,35 +12,31 @@
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
     <!-- Scripts -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    {{-- @vite(['resources/css/app.css', 'resources/js/app.js']) --}}
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="font-sans antialiased">
-    <div class="min-h-screen bg-gray-100">
+<body class="font-sans antialiased bg-gray-100">
+    <div class="min-h-screen">
         @include('layouts.navigation')
 
-        <!-- Sidebar for Dashboard Users -->
+        <!-- Sidebar -->
         @auth
-            @if(auth()->user()->isDeveloper() || auth()->user()->isServiceProvider())
-                @if(auth()->user()->isDeveloper())
-                    <x-dashboard-sidebar role="developer" />
-                @elseif(auth()->user()->isServiceProvider()) 
-                    <x-dashboard-sidebar role="service_provider" />
-                @endif
+            @if(auth()->user()->isDeveloper())
+                <x-dashboard-sidebar role="developer" />
+            @elseif(auth()->user()->isServiceProvider()) 
+                <x-dashboard-sidebar role="service_provider" />
             @endif
         @endauth
 
-        <!-- Main Content Area -->
-        <div class="@auth @if(auth()->user()->isDeveloper() || auth()->user()->isServiceProvider()) lg:pl-64 @endif @endauth">
+        <!-- Main Content -->
+        <div class="lg:pl-64">
             <!-- Page Heading -->
-            @if (isset($header))
+            @isset($header)
                 <header class="bg-white shadow">
                     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                         {{ $header }}
                     </div>
                 </header>
-            @endif
+            @endisset
 
             <!-- Page Content -->
             <main>

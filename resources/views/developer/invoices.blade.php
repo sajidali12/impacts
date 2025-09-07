@@ -19,6 +19,37 @@
                 </div>
             @endif
 
+            <!-- Payment Modal -->
+            @if (session('payment_intent'))
+                <div id="payment-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                        <div class="mt-3">
+                            <h3 class="text-lg font-medium text-gray-900 text-center mb-4">Complete Payment</h3>
+                            
+                            <form id="payment-form">
+                                <div id="payment-element" class="mb-4">
+                                    <!-- Stripe Elements will create form elements here -->
+                                </div>
+                                
+                                <div class="flex justify-between">
+                                    <button type="button" onclick="closePaymentModal()" 
+                                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
+                                        Cancel
+                                    </button>
+                                    <button type="submit" id="submit-payment" 
+                                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">
+                                        <span id="button-text">Pay Now</span>
+                                        <div id="spinner" class="hidden inline-block w-4 h-4 ml-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    </button>
+                                </div>
+                            </form>
+                            
+                            <div id="payment-messages" class="mt-4 text-sm" role="alert"></div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <!-- Overview Cards -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -134,8 +165,8 @@
                                                 </span>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                                                <a href="#" class="text-indigo-600 hover:text-indigo-900">View</a>
-                                                <a href="#" class="text-indigo-600 hover:text-indigo-900">Download</a>
+                                                <a href="{{ route('developer.invoices.view', $invoice) }}" class="text-indigo-600 hover:text-indigo-900">View</a>
+                                                <a href="{{ route('developer.invoices.download', $invoice) }}" class="text-indigo-600 hover:text-indigo-900">Download</a>
                                                 @if($invoice->status === 'pending')
                                                     <form method="POST" action="{{ route('developer.invoices.pay', $invoice) }}" class="inline">
                                                         @csrf
@@ -191,4 +222,81 @@
             </div>
         </div>
     </div>
+
+    @if (session('payment_intent'))
+        <script src="https://js.stripe.com/v3/"></script>
+        <script>
+            const stripe = Stripe('{{ config('services.stripe.key') }}');
+            const elements = stripe.elements({
+                clientSecret: '{{ session('payment_intent.client_secret') }}'
+            });
+
+            const paymentElement = elements.create('payment');
+            paymentElement.mount('#payment-element');
+
+            const form = document.getElementById('payment-form');
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                const submitButton = document.getElementById('submit-payment');
+                const buttonText = document.getElementById('button-text');
+                const spinner = document.getElementById('spinner');
+                
+                // Disable the button and show loading state
+                submitButton.disabled = true;
+                buttonText.textContent = 'Processing...';
+                spinner.classList.remove('hidden');
+
+                const {error} = await stripe.confirmPayment({
+                    elements,
+                    confirmParams: {
+                        return_url: '{{ route('developer.payment.return') }}',
+                    }
+                });
+
+                if (error) {
+                    // Show error to customer
+                    showMessage(error.message);
+                    
+                    // Re-enable the button
+                    submitButton.disabled = false;
+                    buttonText.textContent = 'Pay Now';
+                    spinner.classList.add('hidden');
+                } else {
+                    // Payment succeeded, user will be redirected
+                    showMessage('Payment successful! Redirecting...', 'success');
+                }
+            });
+
+            function showMessage(messageText, type = 'error') {
+                const messageContainer = document.getElementById('payment-messages');
+                messageContainer.textContent = messageText;
+                messageContainer.className = `mt-4 text-sm ${type === 'success' ? 'text-green-600' : 'text-red-600'}`;
+            }
+
+            function closePaymentModal() {
+                document.getElementById('payment-modal').remove();
+            }
+
+            // Auto-close modal on successful payment
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('payment') === 'success') {
+                const paymentIntentId = urlParams.get('payment_intent');
+                
+                // Remove the payment parameters from URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+                
+                // Show success message
+                const successDiv = document.createElement('div');
+                successDiv.className = 'mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative';
+                successDiv.innerHTML = '<span class="block sm:inline">Payment completed successfully! Your invoice will be updated shortly.</span>';
+                document.querySelector('.max-w-7xl').prepend(successDiv);
+                
+                // Optionally refresh the page after a short delay to show updated invoice status
+                setTimeout(() => {
+                    window.location.reload();
+                }, 3000);
+            }
+        </script>
+    @endif
 </x-app-layout>
