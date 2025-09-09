@@ -28,6 +28,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/leads', [AdminController::class, 'leads'])->name('leads');
     Route::get('/invoices', [AdminController::class, 'invoices'])->name('invoices');
     Route::post('/invoices/generate', [AdminController::class, 'generateInvoices'])->name('invoices.generate');
+    Route::get('/invoices/generation-progress', [AdminController::class, 'checkInvoiceGenerationProgress'])->name('invoices.generation-progress');
     Route::get('/payments', [AdminController::class, 'payments'])->name('payments');
     Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
     Route::post('/settings', [AdminController::class, 'updateSettings'])->name('settings.update');

@@ -226,11 +226,59 @@ class AdminController extends Controller
 
     public function generateInvoices(): RedirectResponse
     {
+        // Check if there are any uninvoiced leads
+        $uninvoicedLeadsCount = Lead::uninvoiced()->count();
+        
+        if ($uninvoicedLeadsCount === 0) {
+            return redirect()
+                ->route('admin.invoices')
+                ->with('warning', 'No uninvoiced leads found. There are no leads available to generate invoices for.');
+        }
+        
+        // Get count of active users who could have uninvoiced leads
+        $activeUsersCount = User::whereIn('role', ['developer', 'service_provider'])
+            ->where('is_active', true)
+            ->whereHas('leads', function ($query) {
+                $query->uninvoiced();
+            })
+            ->count();
+
         GenerateInvoicesJob::dispatch();
 
         return redirect()
             ->route('admin.invoices')
-            ->with('success', 'Invoice generation job has been queued. Invoices will be generated shortly.');
+            ->with('success', "Invoice generation started! Processing {$uninvoicedLeadsCount} uninvoiced leads for {$activeUsersCount} users. This may take a few moments...");
+    }
+
+    public function checkInvoiceGenerationProgress()
+    {
+        $uninvoicedLeadsCount = Lead::uninvoiced()->count();
+        
+        // If there are no uninvoiced leads, generation is complete
+        if ($uninvoicedLeadsCount === 0) {
+            return response()->json([
+                'status' => 'completed',
+                'progress' => 100,
+                'message' => 'Invoice generation completed successfully!'
+            ]);
+        }
+
+        // Check if there are any pending jobs in the queue
+        $pendingJobs = \DB::table('jobs')->where('queue', 'default')->count();
+        
+        if ($pendingJobs > 0) {
+            return response()->json([
+                'status' => 'processing',
+                'progress' => 25,
+                'message' => 'Processing invoice generation...'
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'idle',
+            'progress' => 0,
+            'message' => 'Ready to generate invoices'
+        ]);
     }
 
     public function payments(): View

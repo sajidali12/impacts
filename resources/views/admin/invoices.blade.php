@@ -13,6 +13,12 @@
                 </div>
             @endif
 
+            @if (session('warning'))
+                <div class="mb-6 bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative" role="alert">
+                    <span class="block sm:inline">{{ session('warning') }}</span>
+                </div>
+            @endif
+
             <!-- Statistics Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -137,13 +143,27 @@
                             <h3 class="text-lg font-medium text-gray-900">Generate Invoices</h3>
                             <p class="text-sm text-gray-500">Generate invoices for all uninvoiced leads</p>
                         </div>
-                        <form method="POST" action="{{ route('admin.invoices.generate') }}" class="inline">
-                            @csrf
-                            <button type="submit" 
-                                    class="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 font-medium">
-                                Generate Invoices
-                            </button>
-                        </form>
+                        <div class="flex items-center space-x-4">
+                            <!-- Progress Bar (Hidden by default) -->
+                            <div id="progress-container" class="hidden flex-1 max-w-xs">
+                                <div class="bg-gray-200 rounded-full h-2.5">
+                                    <div id="progress-bar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                </div>
+                                <p id="progress-text" class="text-xs text-gray-500 mt-1">Starting...</p>
+                            </div>
+                            
+                            <form id="generate-form" method="POST" action="{{ route('admin.invoices.generate') }}" class="inline">
+                                @csrf
+                                <button id="generate-btn" type="submit" 
+                                        class="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <span id="btn-text">Generate Invoices</span>
+                                    <svg id="loading-spinner" class="hidden animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -295,4 +315,103 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('generate-form');
+            const button = document.getElementById('generate-btn');
+            const btnText = document.getElementById('btn-text');
+            const spinner = document.getElementById('loading-spinner');
+            const progressContainer = document.getElementById('progress-container');
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+
+            let progressInterval;
+
+            form.addEventListener('submit', function(e) {
+                // Show loading state
+                button.disabled = true;
+                btnText.textContent = 'Processing...';
+                spinner.classList.remove('hidden');
+                progressContainer.classList.remove('hidden');
+                
+                // Start progress tracking (will continue after form submission)
+                startProgressTracking();
+            });
+
+            function startProgressTracking() {
+                let currentProgress = 0;
+                
+                // Simulate initial progress
+                updateProgress(10, 'Preparing invoice generation...');
+                
+                setTimeout(() => {
+                    updateProgress(25, 'Analyzing uninvoiced leads...');
+                }, 500);
+
+                setTimeout(() => {
+                    updateProgress(40, 'Starting invoice processing...');
+                }, 1000);
+
+                // Start checking server progress
+                progressInterval = setInterval(() => {
+                    checkProgress();
+                }, 2000);
+            }
+
+            function checkProgress() {
+                fetch('{{ route("admin.invoices.generation-progress") }}', {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'completed') {
+                        updateProgress(100, data.message);
+                        clearInterval(progressInterval);
+                        
+                        setTimeout(() => {
+                            // Refresh the page to show new invoices
+                            window.location.reload();
+                        }, 2000);
+                    } else if (data.status === 'processing') {
+                        // Update progress based on server response
+                        let serverProgress = Math.max(50, data.progress);
+                        updateProgress(serverProgress, data.message);
+                    } else {
+                        // If job hasn't started or completed, continue with client-side progress
+                        updateProgress(75, 'Finalizing invoice generation...');
+                    }
+                })
+                .catch(error => {
+                    console.error('Progress check failed:', error);
+                    updateProgress(90, 'Almost finished...');
+                });
+            }
+
+            function updateProgress(percentage, message) {
+                progressBar.style.width = percentage + '%';
+                progressText.textContent = message + ' (' + percentage + '%)';
+                
+                if (percentage >= 100) {
+                    progressBar.classList.remove('bg-indigo-600');
+                    progressBar.classList.add('bg-green-600');
+                }
+            }
+
+            // If there's a success message on page load, it might mean we're returning from a generation
+            @if(session('success') && str_contains(session('success'), 'started'))
+                // Auto-start progress tracking if we see the "started" message
+                setTimeout(() => {
+                    button.disabled = true;
+                    btnText.textContent = 'Processing...';
+                    spinner.classList.remove('hidden');
+                    progressContainer.classList.remove('hidden');
+                    startProgressTracking();
+                }, 100);
+            @endif
+        });
+    </script>
 </x-app-layout>
